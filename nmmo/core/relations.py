@@ -46,6 +46,7 @@ End of the copied section
 
 RELATIONS = [player_kills, equipment, exploration, foraging, combat]
 
+
 class Relations:
 
     def __init__(self,teams):
@@ -64,9 +65,24 @@ class Relations:
         else:
             raise ValueError(f"{self.teams} is invalid argument")
 
+    def atomic_tasks(self):
+        pass
+    
+    def natural_language_to_string(self):
+        pass
 
-        self.relations = []
+    def short_circuit_mech(self):
+        pass
 
+    @staticmethod
+    def sample_relation(relations):
+        return random.sample(len(relations),k=1)
+
+class Hoarding(Relations):
+
+    def __init__(self,teams):
+        super().__init__(teams)
+        
 
     def atomic_tasks(self):
         
@@ -74,12 +90,8 @@ class Relations:
 
         assert len(relation) == 1
 
-        if relation == player_kills:
-            return [Task(player_kills, 1, Tier.EASY),
-                    Task(player_kills, 2, Tier.NORMAL),
-                    Task(player_kills, 3, Tier.HARD)]
         
-        elif relation == equipment:
+        if relation == equipment:
             return [Task(equipment, 1,  Tier.EASY),
                     Task(equipment, 5, Tier.NORMAL),
                     Task(equipment, 10, Tier.HARD)]
@@ -93,11 +105,6 @@ class Relations:
             return [Task(foraging, 2, Tier.EASY),
                     Task(foraging, 3, Tier.NORMAL),
                     Task(foraging, 4, Tier.HARD)]
-
-        elif relation == combat:
-            return [Task(combat, 2, Tier.EASY),
-                    Task(combat, 3, Tier.NORMAL),
-                    Task(combat, 4, Tier.HARD)]
 
 
     
