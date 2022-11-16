@@ -4,11 +4,11 @@ import random
 
 
 class Task:
-    def __init__(self, *tasks):
-        self.tasks = tasks
+    def __init__(self, *relations):
+        self.relations = relations
 
     def to_natural_language(self):
-        return ' '.join([e.to_natural_language() for e in self.tasks])
+        return ' '.join([e.to_natural_language() for e in self.relations])
 
 class Relation:
     def __init__(self, team):
