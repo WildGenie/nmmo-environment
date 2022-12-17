@@ -9,7 +9,7 @@ class Tile:
       self.config = config
       self.realm  = realm
 
-      self.serialized = 'R{}-C{}'.format(r, c)
+      self.serialized = f'R{r}-C{c}'
 
       self.r     = nmmo.Serialized.Tile.R(realm.dataframe, self.serial, r)
       self.c     = nmmo.Serialized.Tile.C(realm.dataframe, self.serial, c)

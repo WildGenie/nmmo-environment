@@ -19,9 +19,7 @@ class Equipment:
 
    def total(self, lambda_getter):
       items = [lambda_getter(e).val for e in self]
-      if not items:
-          return 0
-      return sum(items)
+      return sum(items) if items else 0
 
    def __iter__(self):
       for item in [self.hat, self.top, self.bottom, self.held, self.ammunition]:
@@ -118,8 +116,7 @@ class Inventory:
             'equipment': self.equipment.packet}
 
    def __iter__(self):
-      for item in self._item_references:
-         yield item
+      yield from self._item_references
 
    def receive(self, item):
       assert isinstance(item, Item.Item), f'{item} received is not an Item instance'
@@ -131,20 +128,22 @@ class Inventory:
       config = self.config
 
       if isinstance(item, Item.Stack):
-          signature = item.signature
-          if signature in self._item_stacks:
-              stack = self._item_stacks[signature]
-              assert item.level.val == stack.level.val, f'{item} stack level mismatch'
-              stack.quantity += item.quantity.val
+         signature = item.signature
+         if signature in self._item_stacks:
+            stack = self._item_stacks[signature]
+            assert item.level.val == stack.level.val, f'{item} stack level mismatch'
+            stack.quantity += item.quantity.val
 
-              if config.LOG_MILESTONES and isinstance(item, Item.Gold) and self.realm.quill.milestone.log_max(f'Wealth', self.gold.quantity.val) and config.LOG_VERBOSE:
-                  logging.info(f'EXCHANGE: Total wealth {self.gold.quantity.val} gold')
-              
-              return
-          elif not self.space:
-              return
+            if (config.LOG_MILESTONES and isinstance(item, Item.Gold)
+                and self.realm.quill.milestone.log_max(
+                    'Wealth', self.gold.quantity.val) and config.LOG_VERBOSE):
+               logging.info(f'EXCHANGE: Total wealth {self.gold.quantity.val} gold')
 
-          self._item_stacks[signature] = item
+            return
+         elif not self.space:
+             return
+
+         self._item_stacks[signature] = item
 
       if not self.space:
           return

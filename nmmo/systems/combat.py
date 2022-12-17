@@ -99,20 +99,17 @@ def attack(realm, player, target, skillFn):
     return damage
 
 def danger(config, pos, full=False):
-   border = config.MAP_BORDER
-   center = config.MAP_CENTER
-   r, c   = pos
-  
-   #Distance from border
-   rDist  = min(r - border, center + border - r - 1)
-   cDist  = min(c - border, center + border - c - 1)
-   dist   = min(rDist, cDist)
-   norm   = 2 * dist / center
+    border = config.MAP_BORDER
+    center = config.MAP_CENTER
+    r, c   = pos
 
-   if full:
-      return norm, mag
+    #Distance from border
+    rDist  = min(r - border, center + border - r - 1)
+    cDist  = min(c - border, center + border - c - 1)
+    dist   = min(rDist, cDist)
+    norm   = 2 * dist / center
 
-   return norm
+    return (norm, mag) if full else norm
 
 def spawn(config, dnger):
     border = config.MAP_BORDER

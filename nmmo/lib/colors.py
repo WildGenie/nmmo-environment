@@ -33,21 +33,19 @@ class Color:
 
 class Color256:
    def make256():
-      parh, parv = np.meshgrid(np.linspace(0.075, 1, 16), np.linspace(0.25, 1, 16)[::-1])
-      parh, parv = parh.T.ravel(), parv.T.ravel()
-      idxs = np.arange(256)
-      params = zip(idxs, parh, parv)
-      colors = [makeColor(idx, h=h, s=1, v=v) for idx, h, v in params]
-      return colors
+     parh, parv = np.meshgrid(np.linspace(0.075, 1, 16), np.linspace(0.25, 1, 16)[::-1])
+     parh, parv = parh.T.ravel(), parv.T.ravel()
+     idxs = np.arange(256)
+     params = zip(idxs, parh, parv)
+     return [makeColor(idx, h=h, s=1, v=v) for idx, h, v in params]
    colors = make256()
 
 class Color16:
    def make():
-      hues   = np.linspace(0, 1, 16)
-      idxs   = np.arange(256)
-      params = zip(idxs, hues)
-      colors = [makeColor(idx, h=h, s=1, v=1) for idx, h in params]
-      return colors
+     hues   = np.linspace(0, 1, 16)
+     idxs   = np.arange(256)
+     params = zip(idxs, hues)
+     return [makeColor(idx, h=h, s=1, v=1) for idx, h in params]
    colors = make()
 
 class Tier:
@@ -131,9 +129,7 @@ class Solid(Swatch):
 
 class Palette:
    def __init__(self, initial_swatch=Neon):
-      self.colors = {}
-      for idx, color in enumerate(initial_swatch.colors()):
-          self.colors[idx] = color
+     self.colors = dict(enumerate(initial_swatch.colors()))
 
    def color(self, idx):
       if idx in self.colors:

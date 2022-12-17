@@ -176,9 +176,7 @@ class Meta(type):
    def __contains__(self, mtl):
       if isinstance(mtl, Material):
          mtl = type(mtl)
-      if isinstance(mtl, type):
-         return mtl in self.materials
-      return mtl in self.indices
+      return mtl in self.materials if isinstance(mtl, type) else mtl in self.indices
 
 class All(metaclass=Meta):
    '''List of all materials'''

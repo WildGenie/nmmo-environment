@@ -35,6 +35,7 @@ def test_all_emulation():
     init_env(Config)
 
 def test_emulate_single_agent():
+
     class Config(nmmo.config.Small):
         EMULATE_CONST_NENT = True
 
@@ -43,7 +44,7 @@ def test_emulate_single_agent():
 
     for e in envs:
         ob = e.reset()
-        for i in range(32):
+        for _ in range(32):
             ob, reward, done, info = e.step({})
 
 def equals(config, batch1, batch2):

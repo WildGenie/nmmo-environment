@@ -11,20 +11,20 @@ class ItemID:
    item_ids = {} 
    id_items = {}
 
-   def register(cls, item_id):
+   def register(self, item_id):
       if __debug__:
-         if cls in ItemID.item_ids:
-            assert ItemID.item_ids[cls] == item_id, f'Missmatched item_id assignment for class {cls}'
+         if self in ItemID.item_ids:
+            assert (ItemID.item_ids[self] == item_id
+                    ), f'Missmatched item_id assignment for class {self}'
          if item_id in ItemID.id_items:
-            assert ItemID.id_items[item_id] == cls, f'Missmatched class assignment for item_id {item_id}'
+            assert (ItemID.id_items[item_id] == self
+                    ), f'Missmatched class assignment for item_id {item_id}'
 
-      ItemID.item_ids[cls] = item_id
-      ItemID.id_items[item_id] = cls
+      ItemID.item_ids[self] = item_id
+      ItemID.id_items[item_id] = self
 
-   def get(cls_or_id):
-      if type(cls_or_id) == int:
-         return ItemID.id_items[cls_or_id]
-      return ItemID.item_ids[cls_or_id]
+   def get(self):
+      return ItemID.id_items[self] if type(self) == int else ItemID.item_ids[self]
 
 class Item:
    ITEM_ID = None
@@ -138,20 +138,27 @@ class Equipment(Item):
 
          if realm.quill.milestone.log_max(f'{item_name}_level', self.level.val) and config.LOG_VERBOSE:
             logging.info(f'EQUIPMENT: Equipped level {self.level.val} {item_name}')
-         if realm.quill.milestone.log_max(f'Item_Level', equipment.item_level) and config.LOG_VERBOSE:
+         if (realm.quill.milestone.log_max('Item_Level', equipment.item_level)
+             and config.LOG_VERBOSE):
             logging.info(f'EQUIPMENT: Item level {equipment.item_level}')
-         if realm.quill.milestone.log_max(f'Mage_Attack', equipment.mage_attack) and config.LOG_VERBOSE:
+         if (realm.quill.milestone.log_max('Mage_Attack', equipment.mage_attack)
+             and config.LOG_VERBOSE):
             logging.info(f'EQUIPMENT: Mage attack {equipment.mage_attack}')
-         if realm.quill.milestone.log_max(f'Mage_Defense', equipment.mage_defense) and config.LOG_VERBOSE:
+         if (realm.quill.milestone.log_max('Mage_Defense', equipment.mage_defense)
+             and config.LOG_VERBOSE):
             logging.info(f'EQUIPMENT: Mage defense {equipment.mage_defense}')
-         if realm.quill.milestone.log_max(f'Range_Attack', equipment.range_attack) and config.LOG_VERBOSE:
+         if (realm.quill.milestone.log_max('Range_Attack', equipment.range_attack)
+             and config.LOG_VERBOSE):
             logging.info(f'EQUIPMENT: Range attack {equipment.range_attack}')
-         if realm.quill.milestone.log_max(f'Range_Defense', equipment.range_defense) and config.LOG_VERBOSE:
+         if (realm.quill.milestone.log_max(
+             'Range_Defense', equipment.range_defense) and config.LOG_VERBOSE):
             logging.info(f'EQUIPMENT: Range defense {equipment.range_defense}')
-         if realm.quill.milestone.log_max(f'Melee_Attack', equipment.melee_attack) and config.LOG_VERBOSE:
+         if (realm.quill.milestone.log_max('Melee_Attack', equipment.melee_attack)
+             and config.LOG_VERBOSE):
             logging.info(f'EQUIPMENT: Melee attack {equipment.melee_attack}')
-         if realm.quill.milestone.log_max(f'Melee_Defense', equipment.melee_defense) and config.LOG_VERBOSE:
-                logging.info(f'EQUIPMENT: Melee defense {equipment.melee_defense}')
+         if (realm.quill.milestone.log_max(
+             'Melee_Defense', equipment.melee_defense) and config.LOG_VERBOSE):
+            logging.info(f'EQUIPMENT: Melee defense {equipment.melee_defense}')
 
       return equip
  
@@ -397,7 +404,8 @@ class Ration(Consumable):
       if entity.level < self.level.val:
           return False
 
-      if self.config.LOG_MILESTONES and self.realm.quill.milestone.log_max(f'Consumed_Ration', self.level.val) and self.config.LOG_VERBOSE:
+      if (self.config.LOG_MILESTONES and self.realm.quill.milestone.log_max(
+          'Consumed_Ration', self.level.val) and self.config.LOG_VERBOSE):
          logging.info(f'PROFESSION: Consumed level {self.level.val} ration')
 
       entity.resources.food.increment(self.resource_restore.val)
@@ -421,7 +429,8 @@ class Poultice(Consumable):
       if entity.level < self.level.val:
           return False
 
-      if self.config.LOG_MILESTONES and self.realm.quill.milestone.log_max(f'Consumed_Poultice', self.level.val) and self.config.LOG_VERBOSE:
+      if (self.config.LOG_MILESTONES and self.realm.quill.milestone.log_max(
+          'Consumed_Poultice', self.level.val) and self.config.LOG_VERBOSE):
          logging.info(f'PROFESSION: Consumed level {self.level.val} poultice')
 
       entity.resources.health.increment(self.health_restore.val)

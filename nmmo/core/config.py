@@ -17,7 +17,7 @@ class Template(metaclass=utils.StaticIterable):
 
    def override(self, **kwargs):
       for k, v in kwargs.items():
-         err = 'CLI argument: {} is not a Config property'.format(k)
+         err = f'CLI argument: {k} is not a Config property'
          assert hasattr(self, k), err
          self.set(k, v)
 
@@ -26,7 +26,7 @@ class Template(metaclass=utils.StaticIterable):
          try:
             setattr(self, k, v)
          except:
-            print('Cannot set attribute: {} to {}'.format(k, v))
+            print(f'Cannot set attribute: {k} to {v}')
             quit()
       self.data[k] = v
 
@@ -43,8 +43,7 @@ class Template(metaclass=utils.StaticIterable):
        return self.data.items()
 
    def __iter__(self):
-       for k in self.data:
-           yield k
+      yield from self.data
 
    def keys(self):
        return self.data.keys()

@@ -44,10 +44,10 @@ class Node(metaclass=utils.IterableNameComparable):
    def N(cls, config):
       return len(cls.edges)
 
-   def deserialize(realm, entity, index):
+   def deserialize(self, entity, index):
       return index
 
-   def args(stim, entity, config):
+   def args(self, entity, config):
       return []
 
 class Fixed:
@@ -68,19 +68,19 @@ class Action(Node):
 
    #Called upon module import (see bottom of file)
    #Sets up serialization domain
-   def hook(config):
+   def hook(self):
       idx = 0
       arguments = []
-      for action in Action.edges(config):
-         action.init(config)
+      for action in Action.edges(self):
+         action.init(self)
          for args in action.edges:
-            args.init(config)
-            if not 'edges' in args.__dict__:
+            args.init(self)
+            if 'edges' not in args.__dict__:
                continue
             for arg in args.edges: 
                arguments.append(arg)
-               arg.serial = tuple([idx])
-               arg.idx = idx 
+               arg.serial = (idx, )
+               arg.idx = idx
                idx += 1
       Action.arguments = arguments
 
@@ -102,35 +102,35 @@ class Action(Node):
           edges.append(Comm)
       return edges
 
-   def args(stim, entity, config):
+   def args(self, entity, config):
       return nmmo.Serialized.edges 
 
 class Move(Node):
    priority = 1
    nodeType = NodeType.SELECTION
-   def call(env, entity, direction):
+   def call(self, entity, direction):
       r, c  = entity.pos
       entID = entity.entID
       entity.history.lastPos = (r, c)
       rDelta, cDelta = direction.delta
       rNew, cNew = r+rDelta, c+cDelta
-      
+
       #One agent per cell
-      tile = env.map.tiles[rNew, cNew] 
+      tile = self.map.tiles[rNew, cNew]
       if tile.occupied and not tile.lava:
          return
 
       if entity.status.freeze > 0:
          return
 
-      env.dataframe.move(nmmo.Serialized.Entity, entID, (r, c), (rNew, cNew))
+      self.dataframe.move(nmmo.Serialized.Entity, entID, (r, c), (rNew, cNew))
       entity.base.r.update(rNew)
       entity.base.c.update(cNew)
 
-      env.map.tiles[r, c].delEnt(entID)
-      env.map.tiles[rNew, cNew].addEnt(entity)
+      self.map.tiles[r, c].delEnt(entID)
+      self.map.tiles[rNew, cNew].addEnt(entity)
 
-      if env.map.tiles[rNew, cNew].lava:
+      if self.map.tiles[rNew, cNew].lava:
          entity.receiveDamage(None, entity.resources.health.val)
 
    @staticproperty
@@ -148,7 +148,7 @@ class Direction(Node):
    def edges():
       return [North, South, East, West]
 
-   def args(stim, entity, config):
+   def args(self, entity, config):
       return Direction.edges
 
 class North(Node):
@@ -179,11 +179,11 @@ class Attack(Node):
    def leaf():
       return True
 
-   def inRange(entity, stim, config, N):
+   def inRange(self, stim, config, N):
       R, C = stim.shape
       R, C = R//2, C//2
 
-      rets = OrderedSet([entity])
+      rets = OrderedSet([self])
       for r in range(R-N, R+N+1):
          for c in range(C-N, C+N+1):
             for e in stim[r, c].ents.values():
@@ -192,13 +192,13 @@ class Attack(Node):
       rets = list(rets)
       return rets
 
-   def l1(pos, cent):
-      r, c = pos
+   def l1(self, cent):
+      r, c = self
       rCent, cCent = cent
       return abs(r - rCent) + abs(c - cCent)
 
-   def call(env, entity, style, targ):
-      config = env.config
+   def call(self, entity, style, targ):
+      config = self.config
 
       if entity.isPlayer and not config.COMBAT_SYSTEM_ENABLED:
          return 
@@ -225,16 +225,14 @@ class Attack(Node):
       #Can't attack same cell or out of range
       if dif == 0 or dif > rng:
          return 
-      
+
       #Execute attack
-      entity.history.attack = {}
-      entity.history.attack['target'] = targ.entID
-      entity.history.attack['style'] = style.__name__
+      entity.history.attack = {'target': targ.entID, 'style': style.__name__}
       targ.attacker = entity
       targ.attackerID.update(entity.entID)
 
       from nmmo.systems import combat
-      dmg = combat.attack(env, entity, targ, style.skill)
+      dmg = combat.attack(self, entity, targ, style.skill)
 
       if style.freeze and dmg > 0:
          targ.status.freeze.update(config.COMBAT_FREEZE_TIME)
@@ -247,7 +245,7 @@ class Style(Node):
    def edges():
       return [Melee, Range, Mage]
 
-   def args(stim, entity, config):
+   def args(self, entity, config):
       return Style.edges
 
 
@@ -259,42 +257,42 @@ class Target(Node):
       #return config.WINDOW ** 2
       return config.PLAYER_N_OBS
 
-   def deserialize(realm, entity, index):
-      return realm.entity(index)
+   def deserialize(self, entity, index):
+      return self.entity(index)
 
-   def args(stim, entity, config):
+   def args(self, entity, config):
       #Should pass max range?
-      return Attack.inRange(entity, stim, config, None)
+      return Attack.inRange(entity, self, config, None)
 
 class Melee(Node):
    nodeType = NodeType.ACTION
    freeze=False
 
-   def attackRange(config):
-      return config.COMBAT_MELEE_REACH
+   def attackRange(self):
+      return self.COMBAT_MELEE_REACH
 
-   def skill(entity):
-      return entity.skills.melee
+   def skill(self):
+      return self.skills.melee
 
 class Range(Node):
    nodeType = NodeType.ACTION
    freeze=False
 
-   def attackRange(config):
-      return config.COMBAT_RANGE_REACH
+   def attackRange(self):
+      return self.COMBAT_RANGE_REACH
 
-   def skill(entity):
-      return entity.skills.range
+   def skill(self):
+      return self.skills.range
 
 class Mage(Node):
    nodeType = NodeType.ACTION
    freeze=False
 
-   def attackRange(config):
-      return config.COMBAT_MAGE_REACH
+   def attackRange(self):
+      return self.COMBAT_MAGE_REACH
 
-   def skill(entity):
-      return entity.skills.mage
+   def skill(self):
+      return self.skills.mage
 
 class Use(Node):
     priority = 3
@@ -303,11 +301,11 @@ class Use(Node):
     def edges():
         return [Item]
 
-    def call(env, entity, item):
-        if item not in entity.inventory:
-            return
+    def call(self, entity, item):
+       if item not in entity.inventory:
+           return
 
-        return item.use(entity)
+       return item.use(entity)
 
 class Give(Node):
     priority = 2
@@ -316,21 +314,21 @@ class Give(Node):
     def edges():
         return [Item, Target]
 
-    def call(env, entity, item, target):
-        if item not in entity.inventory:
-            return
+    def call(self, entity, item, target):
+       if item not in entity.inventory:
+           return
 
-        if not target.isPlayer:
-            return
+       if not target.isPlayer:
+           return
 
-        if not target.inventory.space:
-            return
+       if not target.inventory.space:
+           return
 
-        entity.inventory.remove(item, quantity=1)
-        item = type(item)(env, item.level.val)
-        target.inventory.receive(item)
+       entity.inventory.remove(item, quantity=1)
+       item = type(item)(self, item.level.val)
+       target.inventory.receive(item)
 
-        return True
+       return True
 
 
 class Item(Node):
@@ -340,11 +338,11 @@ class Item(Node):
     def N(cls, config):
         return config.ITEM_N_OBS
 
-    def args(stim, entity, config):
-        return stim.exchange.items()
+    def args(self, entity, config):
+       return self.exchange.items()
 
-    def deserialize(realm, entity, index):
-        return realm.items[index]
+    def deserialize(self, entity, index):
+       return self.items[index]
 
 class Buy(Node):
     priority = 4
@@ -354,15 +352,15 @@ class Buy(Node):
     def edges():
         return [Item]
 
-    def call(env, entity, item):
-        #Do not process exchange actions on death tick
-        if not entity.alive:
-            return
+    def call(self, entity, item):
+       #Do not process exchange actions on death tick
+       if not entity.alive:
+           return
 
-        if not entity.inventory.space:
-            return
+       if not entity.inventory.space:
+           return
 
-        return env.exchange.buy(env, entity, item)
+       return self.exchange.buy(self, entity, item)
 
 class Sell(Node):
     priority = 4
@@ -372,21 +370,21 @@ class Sell(Node):
     def edges():
         return [Item, Price]
 
-    def call(env, entity, item, price):
-        #Do not process exchange actions on death tick
-        if not entity.alive:
-            return
+    def call(self, entity, item, price):
+       #Do not process exchange actions on death tick
+       if not entity.alive:
+           return
 
-        # TODO: Find a better way to check this
-        # Should only occur when item is used on same tick
-        # Otherwise should not be possible
-        if item not in entity.inventory:
-            return
+       # TODO: Find a better way to check this
+       # Should only occur when item is used on same tick
+       # Otherwise should not be possible
+       if item not in entity.inventory:
+           return
 
-        if type(price) != int:
-            price = price.val
+       if type(price) != int:
+           price = price.val
 
-        return env.exchange.sell(env, entity, item, price)
+       return self.exchange.sell(self, entity, item, price)
 
 def init_discrete(values):
     classes = []
@@ -407,8 +405,8 @@ class Price(Node):
     def edges():
         return Price.classes
 
-    def args(stim, entity, config):
-        return Price.edges
+    def args(self, entity, config):
+       return Price.edges
 
 class Token(Node):
     argType  = Fixed
@@ -421,8 +419,8 @@ class Token(Node):
     def edges():
         return Comm.classes
 
-    def args(stim, entity, config):
-        return Comm.edges
+    def args(self, entity, config):
+       return Comm.edges
 
 class Comm(Node):
     argType  = Fixed
@@ -432,8 +430,8 @@ class Comm(Node):
     def edges():
         return [Token]
 
-    def call(env, entity, token):
-        entity.base.comm.update(token.val)
+    def call(self, entity, token):
+       entity.base.comm.update(token.val)
 
 #TODO: Solve AGI
 class BecomeSkynet:

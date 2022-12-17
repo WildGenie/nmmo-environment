@@ -18,21 +18,21 @@ def sharp(self, noise):
 
 class Save:
    '''Save utility for map files'''
-   def render(mats, lookup, path):
+   def render(self, lookup, path):
       '''Render tiles to png'''
       images = [[lookup[e] for e in l] for l in mats]
       image = np.vstack([np.hstack(e) for e in images])
       imsave(path, image)
 
-   def fractal(terrain, path):
+   def fractal(self, path):
       '''Render raw noise fractal to png'''
-      frac = (256*terrain).astype(np.uint8)
+      frac = (256 * self).astype(np.uint8)
       imsave(path, frac)
 
-   def np(mats, path):
+   def np(self, path):
       '''Save map to .npy'''
       path = os.path.join(path, 'map.npy')
-      np.save(path, mats.astype(int))
+      np.save(path, self.astype(int))
 
 class Terrain:
    '''Terrain material class; populated at runtime'''
@@ -230,10 +230,10 @@ class MapGenerator:
           return
 
       if __debug__:
-          print('Generating {} maps'.format(config.MAP_N))
+         print(f'Generating {config.MAP_N} maps')
 
       for idx in tqdm(range(config.MAP_N)):
-         path = path_maps + '/map' + str(idx+1)
+         path = f'{path_maps}/map{str(idx + 1)}'
          os.makedirs(path, exist_ok=True)
 
          terrain, tiles = self.generate_map(idx)
@@ -244,8 +244,8 @@ class MapGenerator:
          if config.MAP_GENERATE_PREVIEWS:
             b = config.MAP_BORDER
             tiles = [e[b:-b+1] for e in tiles][b:-b+1]
-            Save.fractal(terrain, path+'/fractal.png')
-            Save.render(tiles, self.textures, path+'/map.png')
+            Save.fractal(terrain, f'{path}/fractal.png')
+            Save.render(tiles, self.textures, f'{path}/map.png')
 
    def generate_map(self, idx):
       '''Generate a single map

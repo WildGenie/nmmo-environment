@@ -15,22 +15,22 @@ class classproperty(object):
         return self.f(owner)
 
 class Iterable(type):
-   def __iter__(cls):
-      queue = deque(cls.__dict__.items())
-      while len(queue) > 0:
-         name, attr = queue.popleft()
-         if type(name) != tuple:
-            name = tuple([name])
-         if not inspect.isclass(attr):
-            continue
-         yield name, attr
+   def __iter__(self):
+       queue = deque(self.__dict__.items())
+       while len(queue) > 0:
+           name, attr = queue.popleft()
+           if type(name) != tuple:
+               name = (name, )
+           if not inspect.isclass(attr):
+              continue
+           yield name, attr
 
-   def values(cls):
-      return [e[1] for e in cls]
+   def values(self):
+       return [e[1] for e in cls]
 
 class StaticIterable(type):
-    def __iter__(cls):
-        stack = list(cls.__dict__.items())
+    def __iter__(self):
+        stack = list(self.__dict__.items())
         stack.reverse()
         for name, attr in stack:
             if name == '__module__':

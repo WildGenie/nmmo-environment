@@ -9,6 +9,4 @@ class ExperienceCalculator:
       return int(self.exp[level - 1])
 
    def levelAtExp(self, exp):
-      if exp >= self.exp[-1]:
-         return len(self.exp)
-      return np.argmin(exp >= self.exp)
+      return len(self.exp) if exp >= self.exp[-1] else np.argmin(exp >= self.exp)

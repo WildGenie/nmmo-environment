@@ -28,11 +28,8 @@ class Map:
 
    @property
    def packet(self):
-       '''Packet of degenerate resource states'''
-       missingResources = []
-       for e in self.updateList:
-           missingResources.append(e.pos)
-       return missingResources
+      '''Packet of degenerate resource states'''
+      return [e.pos for e in self.updateList]
 
    @property
    def repr(self):
@@ -65,7 +62,8 @@ class Map:
 
    def step(self):
       '''Evaluate updatable tiles'''
-      if self.config.LOG_MILESTONES and self.realm.quill.milestone.log_max(f'Resource_Depleted', len(self.updateList)) and self.config.LOG_VERBOSE:
+      if (self.config.LOG_MILESTONES and self.realm.quill.milestone.log_max(
+          'Resource_Depleted', len(self.updateList)) and self.config.LOG_VERBOSE):
          logging.info(f'RESOURCE: Depleted {len(self.updateList)} resource tiles')                           
 
 

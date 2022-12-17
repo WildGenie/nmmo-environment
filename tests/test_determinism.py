@@ -9,13 +9,13 @@ def test_determinism():
     config = nmmo.config.Default()
     env1 = nmmo.Env(config, seed=42)
     env1.reset()
-    for i in range(2):
+    for _ in range(2):
         obs1, _, _, _ = env1.step({})
-    
+
     config = nmmo.config.Default()
     env2 = nmmo.Env(config, seed=42)
     env2.reset()
-    for i in range(2):
+    for _ in range(2):
         obs2, _, _, _ = env2.step({})
 
     npc1 = env1.realm.npcs.values()
@@ -29,7 +29,7 @@ def test_determinism():
     for k in keys:
         ent1 = obs1[k]
         ent2 = obs2[k]
-        
+
         obj = ent1.keys()
         for o in obj:
             obj1 = ent1[o]

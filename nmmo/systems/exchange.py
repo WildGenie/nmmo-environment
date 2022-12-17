@@ -44,9 +44,7 @@ class Queue(deque):
       self.appendleft(x)
    
    def peek(self):
-      if len(self) > 0:
-         return self[-1]
-      return None
+      return self[-1] if len(self) > 0 else None
 
 class ItemListings:
    def __init__(self):
@@ -112,21 +110,17 @@ class Exchange:
 
    @property
    def dataframeKeys(self):
-      keys = []
-      for listings in self.item_listings.values():
-         if listings.placeholder:
-            keys.append(listings.placeholder.instanceID)
-
-      return keys
+      return [
+          listings.placeholder.instanceID
+          for listings in self.item_listings.values() if listings.placeholder
+      ]
 
    @property
    def dataframeVals(self):
-      vals = []
-      for listings in self.item_listings.values():
-         if listings.placeholder:
-            vals.append(listings.placeholder)
-
-      return vals
+      return [
+          listings.placeholder for listings in self.item_listings.values()
+          if listings.placeholder
+      ]
 
    @property
    def packet(self):
@@ -178,10 +172,12 @@ class Exchange:
          if ((config.LOG_MILESTONES and realm.quill.milestone.log_max(f'Buy_{item.__name__}', level)) or 
                (config.LOG_EVENTS and realm.quill.event.log(f'Buy_{item.__name__}', level))) and config.LOG_VERBOSE:
             logging.info(f'EXCHANGE: Bought level {level} {item.__name__} for {price} gold')
-         if ((config.LOG_MILESTONES and realm.quill.milestone.log_max(f'Transaction_Amount', price)) or 
-               (config.LOG_EVENTS and realm.quill.event.log(f'Transaction_Amount', price))) and config.LOG_VERBOSE:
+         if (config.LOG_MILESTONES
+             and realm.quill.milestone.log_max('Transaction_Amount', price)
+             or config.LOG_EVENTS and realm.quill.event.log(
+                 'Transaction_Amount', price)) and config.LOG_VERBOSE:
             logging.info(f'EXCHANGE: Transaction of {price} gold (level {level} {item.__name__})')
- 
+
          #Update placeholder
          listings.placeholder = None
          if listings.supply:

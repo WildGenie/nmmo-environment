@@ -33,11 +33,8 @@ def habitable(tiles, ent):
       cands.append(nmmo.action.West)
    if tiles[r, c+1].vacant:
       cands.append(nmmo.action.East)
-   
-   if len(cands) == 0:
-      return nmmo.action.North
 
-   return random.choice(cands)
+   return random.choice(cands) if cands else nmmo.action.North
 
 def towards(direction):
    if direction == (-1, 0):
