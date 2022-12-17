@@ -25,7 +25,7 @@ class Replay:
         self.map     = None
 
         if config is not None:
-            self.path = config.SAVE_REPLAY + '.lzma'
+            self.path = f'{config.SAVE_REPLAY}.lzma'
 
         self._i = 0
 
@@ -96,43 +96,43 @@ class Env(ParallelEnv):
    metadata = {'render.modes': ['human'], 'name': 'neural-mmo'}
 
    def __init__(self, config=None, seed=None):
-      '''
+       '''
       Args:
          config : A forge.blade.core.Config object or subclass object
       '''
-      if seed is not None:
-          np.random.seed(seed)
-          random.seed(seed)
+       if seed is not None:
+           np.random.seed(seed)
+           random.seed(seed)
 
-      super().__init__()
+       super().__init__()
 
-      if config is None:
-          config = nmmo.config.Default()
+       if config is None:
+           config = nmmo.config.Default()
 
-      assert isinstance(config, nmmo.config.Config), f'Config {config} is not a config instance (did you pass the class?)'
+       assert isinstance(config, nmmo.config.Config), f'Config {config} is not a config instance (did you pass the class?)'
 
-      if not config.PLAYERS:
-          from nmmo import agent
-          config.PLAYERS = [agent.Random]
+       if not config.PLAYERS:
+           from nmmo import agent
+           config.PLAYERS = [agent.Random]
 
-      if not config.MAP_GENERATOR:
-          config.MAP_GENERATOR = terrain.MapGenerator
+       if not config.MAP_GENERATOR:
+           config.MAP_GENERATOR = terrain.MapGenerator
 
-      self.realm      = core.Realm(config)
-      self.registry   = nmmo.OverlayRegistry(config, self)
-    
-      self.config     = config
-      self.overlay    = None
-      self.overlayPos = [256, 256]
-      self.client     = None
-      self.obs        = None
+       self.realm      = core.Realm(config)
+       self.registry   = nmmo.OverlayRegistry(config, self)
 
-      self.has_reset  = False
+       self.config     = config
+       self.overlay    = None
+       self.overlayPos = [256, 256]
+       self.client     = None
+       self.obs        = None
 
-      if self.config.SAVE_REPLAY:
-         self.replay = Replay(config)
+       self.has_reset  = False
 
-      self.possible_agents = [_ for _ in range(1, config.PLAYER_N + 1)]
+       if self.config.SAVE_REPLAY:
+          self.replay = Replay(config)
+
+       self.possible_agents = list(range(1, config.PLAYER_N + 1))
 
    @functools.lru_cache(maxsize=None)
    def observation_space(self, agent: int):
@@ -267,7 +267,7 @@ class Env(ParallelEnv):
        pass
 
    def step(self, actions):
-      '''Simulates one game tick or timestep
+       '''Simulates one game tick or timestep
 
       Args:
          actions: A dictionary of agent decisions of format::
@@ -358,118 +358,118 @@ class Env(ParallelEnv):
 
             Provided for conformity with PettingZoo
       '''
-      assert self.has_reset, 'step before reset'
+       assert self.has_reset, 'step before reset'
 
-      if self.config.RENDER or self.config.SAVE_REPLAY:
-          packet = {
-                'config': self.config,
-                'pos': self.overlayPos,
-                'wilderness': 0
-                }
+       if self.config.RENDER or self.config.SAVE_REPLAY:
+           packet = {
+                 'config': self.config,
+                 'pos': self.overlayPos,
+                 'wilderness': 0
+                 }
 
-          packet = {**self.realm.packet(), **packet}
+           packet = {**self.realm.packet(), **packet}
 
-          if self.overlay is not None:
-             packet['overlay'] = self.overlay
-             self.overlay      = None
+           if self.overlay is not None:
+              packet['overlay'] = self.overlay
+              self.overlay      = None
 
-          self.packet = packet
+           self.packet = packet
 
-          if self.config.SAVE_REPLAY:
-              self.replay.update(packet)
+       if self.config.SAVE_REPLAY:
+           self.replay.update(packet)
 
-      #Preprocess actions for neural models
-      for entID in list(actions.keys()):
-         #TODO: Should this silently fail? Warning level options?
-         if entID not in self.realm.players:
-            continue
+          #Preprocess actions for neural models
+       for entID in list(actions.keys()):
+           #TODO: Should this silently fail? Warning level options?
+           if entID not in self.realm.players:
+              continue
 
-         ent = self.realm.players[entID]
+           ent = self.realm.players[entID]
 
-         # Fix later -- don't allow action inputs for scripted agents
-         if ent.agent.scripted:
-             continue
+           # Fix later -- don't allow action inputs for scripted agents
+           if ent.agent.scripted:
+               continue
 
-         if not ent.alive:
-            continue
+           if not ent.alive:
+              continue
 
-         self.actions[entID] = {}
-         for atn, args in actions[entID].items():
-            self.actions[entID][atn] = {}
-            drop = False
-            for arg, val in args.items():
-               if arg.argType == nmmo.action.Fixed:
-                  self.actions[entID][atn][arg] = arg.edges[val]
-               elif arg == nmmo.action.Target:
-                  if val >= len(ent.targets):
-                      drop = True
-                      continue
-                  targ = ent.targets[val]
-                  self.actions[entID][atn][arg] = self.realm.entity(targ)
-               elif atn in (nmmo.action.Sell, nmmo.action.Use, nmmo.action.Give) and arg == nmmo.action.Item:
-                  if val >= len(ent.inventory.dataframeKeys):
-                      drop = True
-                      continue
-                  itm = [e for e in ent.inventory._item_references][val]
-                  if type(itm) == Item.Gold:
-                      drop = True
-                      continue
-                  self.actions[entID][atn][arg] = itm
-               elif atn == nmmo.action.Buy and arg == nmmo.action.Item:
-                  if val >= len(self.realm.exchange.dataframeKeys):
-                      drop = True
-                      continue
-                  itm = self.realm.exchange.dataframeVals[val]
-                  self.actions[entID][atn][arg] = itm
-               elif __debug__: #Fix -inf in classifier and assert err on bad atns
-                  assert False, f'Argument {arg} invalid for action {atn}'
-
-            # Cull actions with bad args
-            if drop and atn in self.actions[entID]:
-                del self.actions[entID][atn]
-
-      #Step: Realm, Observations, Logs
-      self.dead    = self.realm.step(self.actions)
-      self.actions = {}
-      self.obs     = {}
-      infos        = {}
-
-      obs, rewards, dones, self.raw = {}, {}, {}, {}
-      for entID, ent in self.realm.players.items():
-         ob = self.realm.dataframe.get(ent)
-         self.obs[entID] = ob
-         if ent.agent.scripted:
-            atns = ent.agent(ob)
-            for atn, args in atns.items():
+           self.actions[entID] = {}
+           for atn, args in actions[entID].items():
+               self.actions[entID][atn] = {}
+               drop = False
                for arg, val in args.items():
-                  atns[atn][arg] = arg.deserialize(self.realm, ent, val)
-            self.actions[entID] = atns
+                   if arg.argType == nmmo.action.Fixed:
+                       self.actions[entID][atn][arg] = arg.edges[val]
+                   elif arg == nmmo.action.Target:
+                      if val >= len(ent.targets):
+                          drop = True
+                          continue
+                      targ = ent.targets[val]
+                      self.actions[entID][atn][arg] = self.realm.entity(targ)
+                   elif atn in (nmmo.action.Sell, nmmo.action.Use, nmmo.action.Give) and arg == nmmo.action.Item:
+                       if val >= len(ent.inventory.dataframeKeys):
+                           drop = True
+                           continue
+                       itm = list(ent.inventory._item_references)[val]
+                       if type(itm) == Item.Gold:
+                           drop = True
+                           continue
+                       self.actions[entID][atn][arg] = itm
+                   elif atn == nmmo.action.Buy and arg == nmmo.action.Item:
+                      if val >= len(self.realm.exchange.dataframeKeys):
+                          drop = True
+                          continue
+                      itm = self.realm.exchange.dataframeVals[val]
+                      self.actions[entID][atn][arg] = itm
+                   elif __debug__: #Fix -inf in classifier and assert err on bad atns
+                      assert False, f'Argument {arg} invalid for action {atn}'
 
-         else:
-            obs[entID]     = ob
-            rewards[entID], infos[entID] = self.reward(ent)
-            dones[entID]   = False
-      
-      self.log_env()
-      for entID, ent in self.dead.items():
-         self.log_player(ent)
+               # Cull actions with bad args
+               if drop and atn in self.actions[entID]:
+                   del self.actions[entID][atn]
 
-      self.realm.exchange.step()
+       #Step: Realm, Observations, Logs
+       self.dead    = self.realm.step(self.actions)
+       self.actions = {}
+       self.obs     = {}
+       infos        = {}
 
-      for entID, ent in self.dead.items():
-         if ent.agent.scripted:
-            continue
-         rewards[ent.entID], infos[ent.entID] = self.reward(ent)
+       obs, rewards, dones, self.raw = {}, {}, {}, {}
+       for entID, ent in self.realm.players.items():
+          ob = self.realm.dataframe.get(ent)
+          self.obs[entID] = ob
+          if ent.agent.scripted:
+             atns = ent.agent(ob)
+             for atn, args in atns.items():
+                for arg, val in args.items():
+                   atns[atn][arg] = arg.deserialize(self.realm, ent, val)
+             self.actions[entID] = atns
 
-         dones[ent.entID] = not self.config.RESPAWN #TODO: Is this correct behavior?
+          else:
+             obs[entID]     = ob
+             rewards[entID], infos[entID] = self.reward(ent)
+             dones[entID]   = False
 
-         #obs[ent.entID]     = self.dummy_ob
+       self.log_env()
+       for entID, ent in self.dead.items():
+          self.log_player(ent)
 
-      #Pettingzoo API
-      self.agents = list(self.realm.players.keys())
+       self.realm.exchange.step()
 
-      self.obs = obs
-      return obs, rewards, dones, infos
+       for entID, ent in self.dead.items():
+          if ent.agent.scripted:
+             continue
+          rewards[ent.entID], infos[ent.entID] = self.reward(ent)
+
+          dones[ent.entID] = not self.config.RESPAWN #TODO: Is this correct behavior?
+
+          #obs[ent.entID]     = self.dummy_ob
+
+       #Pettingzoo API
+       self.agents = list(self.realm.players.keys())
+
+       self.obs = obs
+       return obs, rewards, dones, infos
 
    ############################################################################
    ### Logging
@@ -480,18 +480,12 @@ class Env(ParallelEnv):
        lvls = [player.equipment.held.level.val for player in self.realm.players.values()
                if player.equipment.held is not None and player.policy == policy]
 
-       if len(lvls) == 0:
-           return 0
-
-       return max(lvls)
+       return max(lvls, default=0)
 
    def max_item(self, policy):
        lvls = [player.equipment.item_level for player in self.realm.players.values() if player.policy == policy]
 
-       if len(lvls) == 0:
-           return 0
-
-       return max(lvls)
+       return max(lvls, default=0)
 
    def log_env(self) -> None:
        '''Logs player data upon death
@@ -529,9 +523,9 @@ class Env(ParallelEnv):
                    key = (item, level)
                    if key in self.realm.exchange.item_listings:
                        listing = self.realm.exchange.item_listings[key]
-                       quill.log_env(f'Market/{name}-{level}_Price', listing.price if listing.price else 0)
-                       quill.log_env(f'Market/{name}-{level}_Volume', listing.volume if listing.volume else 0)
-                       quill.log_env(f'Market/{name}-{level}_Supply', listing.supply if listing.supply else 0)
+                       quill.log_env(f'Market/{name}-{level}_Price', listing.price or 0)
+                       quill.log_env(f'Market/{name}-{level}_Volume', listing.volume or 0)
+                       quill.log_env(f'Market/{name}-{level}_Supply', listing.supply or 0)
                    else:
                        quill.log_env(f'Market/{name}-{level}_Price', 0)
                        quill.log_env(f'Market/{name}-{level}_Volume', 0)
@@ -583,7 +577,7 @@ class Env(ParallelEnv):
 
 
    def log_player(self, player) -> None:
-      '''Logs player data upon death
+       '''Logs player data upon death
 
       This function is called automatically when an agent dies
       to compute summary stats. You should not call it manually.
@@ -593,30 +587,30 @@ class Env(ParallelEnv):
          player: An agent
       '''
 
-      name = player.agent.policy
-      config = self.config
-      quill  = self.realm.quill
-      policy = player.policy
+       name = player.agent.policy
+       config = self.config
+       quill  = self.realm.quill
+       policy = player.policy
 
-      for key, fn in quill.shared.items():
-          quill.log_player(f'{key}_{policy}', fn(player))
+       for key, fn in quill.shared.items():
+           quill.log_player(f'{key}_{policy}', fn(player))
 
-      # Duplicated task reward with/without name for SR calc
-      if player.diary:
-         if player.agent.scripted:
-            player.diary.update(self.realm, player)
+          # Duplicated task reward with/without name for SR calc
+       if player.diary:
+           if player.agent.scripted:
+              player.diary.update(self.realm, player)
 
-         quill.log_player(f'Task_Reward',     player.diary.cumulative_reward)
+           quill.log_player('Task_Reward', player.diary.cumulative_reward)
 
-         for achievement in player.diary.achievements:
-            quill.log_player(achievement.name, float(achievement.completed))
-      else:
-         quill.log_player(f'Task_Reward', player.history.timeAlive.val)
+           for achievement in player.diary.achievements:
+              quill.log_player(achievement.name, float(achievement.completed))
+       else:
+           quill.log_player('Task_Reward', player.history.timeAlive.val)
 
-      # Used for SR
-      quill.log_player('PolicyID', player.agent.policyID)
-      if player.diary:
-         quill.log_player(f'Task_Reward', player.diary.cumulative_reward)
+       # Used for SR
+       quill.log_player('PolicyID', player.agent.policyID)
+       if player.diary:
+           quill.log_player('Task_Reward', player.diary.cumulative_reward)
 
    def terminal(self):
       '''Logs currently alive agents and returns all collected logs

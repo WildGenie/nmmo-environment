@@ -37,8 +37,7 @@ class Resources:
           self.health.decrement(config.RESOURCE_DEHYDRATION_RATE)
 
    def packet(self):
-      data = {}
-      data['health'] = self.health.packet()
+      data = {'health': self.health.packet()}
       data['food']   = self.food.packet()
       data['water']  = self.water.packet()
       return data
@@ -52,9 +51,7 @@ class Status:
       self.freeze.decrement()
 
    def packet(self):
-      data = {}
-      data['freeze'] = self.freeze.val
-      return data
+      return {'freeze': self.freeze.val}
 
 class History:
    def __init__(self, ent):
@@ -87,12 +84,12 @@ class History:
       self.timeAlive.increment()
 
    def packet(self):
-      data = {}
-      data['damage']    = self.damage.val
-      data['timeAlive'] = self.timeAlive.val
-      data['damage_inflicted'] = self.damage_inflicted
-      data['damage_received'] = self.damage_received
-
+      data = {
+          'damage': self.damage.val,
+          'timeAlive': self.timeAlive.val,
+          'damage_inflicted': self.damage_inflicted,
+          'damage_received': self.damage_received,
+      }
       if self.attack is not None:
          data['attack'] = self.attack
 
@@ -147,14 +144,15 @@ class Base:
       return self.r.val, self.c.val
 
    def packet(self):
-      data = {}
+      data = {
+          'r': self.r.val,
+          'c': self.c.val,
+          'name': self.name,
+          'level': self.level.val,
+          'item_level': self.item_level.val,
+          'color': self.color.packet(),
+      }
 
-      data['r']          = self.r.val
-      data['c']          = self.c.val
-      data['name']       = self.name
-      data['level']      = self.level.val
-      data['item_level'] = self.item_level.val
-      data['color']      = self.color.packet()
       data['population'] = self.population.val
       data['self']       = self.self.val
 
@@ -187,9 +185,8 @@ class Entity:
       self.inventory = inventory.Inventory(realm, self)
 
    def packet(self):
-      data = {}
+      data = {'status': self.status.packet()}
 
-      data['status']    = self.status.packet()
       data['history']   = self.history.packet()
       data['inventory'] = self.inventory.packet()
       data['alive']     = self.alive
@@ -214,13 +211,7 @@ class Entity:
       if self.alive:
           return True
 
-      if source is None:
-          return True 
-
-      if not source.isPlayer:
-          return True 
-
-      return False
+      return True if source is None else not source.isPlayer
 
    def applyDamage(self, dmg, style):
       self.history.damage_inflicted += dmg
@@ -231,10 +222,7 @@ class Entity:
 
    @property
    def alive(self):
-      if self.resources.health.empty:
-         return False
-
-      return True
+      return not self.resources.health.empty
 
    @property
    def isPlayer(self) -> bool:

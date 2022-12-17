@@ -24,16 +24,16 @@ def map_to_rewards(tiles, entity) -> List[List[float]]:
       tile_line = tiles[line]
       for column in range(len(tile_line)):
          tile_val = tile_line[column].state.tex
-         if tile_val == 'lava':
-            reward_matrix[line][column] += lava_reward
-
-         if tile_val == 'stone':
-            reward_matrix[line][column] += stone_reward
-
          if tile_val == 'forest':
             reward_matrix[line][column] += forest_reward
 
-         if tile_val == 'water':
+         elif tile_val == 'lava':
+            reward_matrix[line][column] += lava_reward
+
+         elif tile_val == 'stone':
+            reward_matrix[line][column] += stone_reward
+
+         elif tile_val == 'water':
             reward_matrix[line][column] += water_reward
 
          #TODO: Make these comparisons work off of the water Enum type
@@ -72,21 +72,13 @@ def values_around(position: (int, int), value_matrix: List[List[float]]) -> (
         float, float, float, float):
    line, column = position
 
-   if line - 1 >= 0:
-      top_value = value_matrix[line - 1][column]
-   else:
-      top_value = float('-inf')
-
+   top_value = value_matrix[line - 1][column] if line >= 1 else float('-inf')
    if line + 1 < len(value_matrix):
       bottom_value = value_matrix[line + 1][column]
    else:
       bottom_value = float('-inf')
 
-   if column - 1 >= 0:
-      left_value = value_matrix[line][column - 1]
-   else:
-      left_value = float('-inf')
-
+   left_value = value_matrix[line][column - 1] if column >= 1 else float('-inf')
    if column + 1 < len(value_matrix[0]):
       right_value = value_matrix[line][column + 1]
    else:

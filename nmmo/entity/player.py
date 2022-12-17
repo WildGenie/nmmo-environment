@@ -24,7 +24,7 @@ class Player(entity.Entity):
 
       # Logs
       self.buys                     = 0
-      self.sells                    = 0 
+      self.sells                    = 0
       self.ration_consumed          = 0
       self.poultice_consumed        = 0
       self.ration_level_consumed    = 0
@@ -34,9 +34,8 @@ class Player(entity.Entity):
       self.skills = Skills(realm, self)
 
       self.diary  = None
-      tasks = realm.config.TASKS
-      if tasks:
-          self.diary = Diary(tasks)
+      if tasks := realm.config.TASKS:
+         self.diary = Diary(tasks)
 
       self.dataframe.init(nmmo.Serialized.Entity, self.entID, self.pos)
 

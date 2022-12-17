@@ -32,18 +32,15 @@ class Equipment:
 
    @property
    def packet(self):
-      packet = {}
-
-      packet['item_level']    = self.total
-
-      packet['melee_attack']  = self.melee_attack
-      packet['range_attack']  = self.range_attack
-      packet['mage_attack']   = self.mage_attack
-      packet['melee_defense'] = self.melee_defense
-      packet['range_defense'] = self.range_defense
-      packet['mage_defense']  = self.mage_defense
-
-      return packet
+      return {
+          'item_level': self.total,
+          'melee_attack': self.melee_attack,
+          'range_attack': self.range_attack,
+          'mage_attack': self.mage_attack,
+          'melee_defense': self.melee_defense,
+          'range_defense': self.range_defense,
+          'mage_defense': self.mage_defense,
+      }
 
 
 class NPC(entity.Entity):

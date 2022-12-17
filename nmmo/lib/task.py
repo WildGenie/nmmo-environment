@@ -76,7 +76,7 @@ class AND(Task):
     self._tasks = tasks
 
   def completed(self, realm, entity) -> bool:
-    return all([t.completed(realm, entity) for t in self._tasks])
+    return all(t.completed(realm, entity) for t in self._tasks)
 
   def description(self) -> List:
     return ["AND"] + [t.description() for t in self._tasks]
@@ -88,7 +88,7 @@ class OR(Task):
     self._tasks = tasks
 
   def completed(self, realm, entity) -> bool:
-    return any([t.completed(realm, entity) for t in self._tasks])
+    return any(t.completed(realm, entity) for t in self._tasks)
 
   def description(self) -> List:
     return ["OR"] + [t.description() for t in self._tasks]
@@ -114,9 +114,8 @@ class InflictDamage(TargetTask):
 
   def completed(self, realm, entity) -> bool:
     # TODO(daveey) damage_type is ignored, needs to be added to entity.history
-    return sum([
-      realm.players[a].history.damage_inflicted for a in self._target.agents()
-    ]) >= self._quantity
+    return (sum(realm.players[a].history.damage_inflicted
+                for a in self._target.agents()) >= self._quantity)
 
   def description(self) -> List:
     return super().description() + [self._damage_type, self._quantity]
@@ -128,9 +127,8 @@ class Defend(TargetTask):
 
   def completed(self, realm, entity) -> bool:
     # TODO(daveey) need a way to specify time horizon
-    return realm.tick >= self._num_steps and all([
-      realm.players[a].alive for a in self._target.agents()
-    ])
+    return realm.tick >= self._num_steps and all(realm.players[a].alive
+                                                 for a in self._target.agents())
 
   def description(self) -> List:
     return super().description() + [self._num_steps]
@@ -233,7 +231,7 @@ class TaskSampler(object):
              not_p: float = 0.0) -> Task:
     
     clauses = []
-    for c in range(0, random.randint(min_clauses, max_clauses)):
+    for _ in range(random.randint(min_clauses, max_clauses)):
       task_specs = random.choices(
         self._task_specs, 
         weights = self._task_spec_weights,
@@ -251,10 +249,7 @@ class TaskSampler(object):
       else:
         clauses.append(AND(*tasks))
 
-    if len(clauses) == 1:
-      return clauses[0]
-
-    return OR(*clauses)
+    return clauses[0] if len(clauses) == 1 else OR(*clauses)
 
   @staticmethod
   def create_default_task_sampler(team_helper: TeamHelper, agent_id: int):

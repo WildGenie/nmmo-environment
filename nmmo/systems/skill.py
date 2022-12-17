@@ -23,11 +23,10 @@ class SkillGroup:
            skill.update(realm, entity)
 
    def packet(self):
-      data = {}
-      for skill in self.skills:
-         data[skill.__class__.__name__.lower()] = skill.packet()
-
-      return data
+      return {
+          skill.__class__.__name__.lower(): skill.packet()
+          for skill in self.skills
+      }
 
 class Skill:
    skillItems = abc.ABCMeta
@@ -42,12 +41,7 @@ class Skill:
       skillGroup.skills.add(self)
 
    def packet(self):
-      data = {}
-
-      data['exp']   = self.exp
-      data['level'] = self.level.val
-
-      return data
+      return {'exp': self.exp, 'level': self.level.val}
 
    def add_xp(self, xp):
       level     = self.expCalc.levelAtExp(self.exp)
@@ -73,30 +67,26 @@ class NonCombatSkill(Skill): pass
 
 class HarvestSkill(NonCombatSkill):
     def processDrops(self, realm, entity, matl, dropTable):
-        level = 1
-        tool  = entity.equipment.held
-        if type(tool) == matl.tool:
-            level = tool.level.val
+       tool  = entity.equipment.held
+       level = tool.level.val if type(tool) == matl.tool else 1
+       #TODO: double-check drop table quantity
+       for drop in dropTable.roll(realm, level):
+           assert drop.level.val == level, 'Drop level does not match roll specification'
 
-        #TODO: double-check drop table quantity
-        for drop in dropTable.roll(realm, level):
-            assert drop.level.val == level, 'Drop level does not match roll specification'
+           if self.config.LOG_MILESTONES and realm.quill.milestone.log_max(f'Gather_{drop.__class__.__name__}', level) and self.config.LOG_VERBOSE:
+               logging.info(f'PROFESSION: Gathered level {level} {drop.__class__.__name__} (level {self.level.val} {self.__class__.__name__})') 
 
-            if self.config.LOG_MILESTONES and realm.quill.milestone.log_max(f'Gather_{drop.__class__.__name__}', level) and self.config.LOG_VERBOSE:
-                logging.info(f'PROFESSION: Gathered level {level} {drop.__class__.__name__} (level {self.level.val} {self.__class__.__name__})') 
-
-            if entity.inventory.space:
-                entity.inventory.receive(drop)
+           if entity.inventory.space:
+               entity.inventory.receive(drop)
 
     def harvest(self, realm, entity, matl, deplete=True):
-        r, c = entity.pos
-        if realm.map.tiles[r, c].state != matl:
-            return
+       r, c = entity.pos
+       if realm.map.tiles[r, c].state != matl:
+           return
 
-        dropTable = realm.map.harvest(r, c, deplete)
-        if dropTable:
-            self.processDrops(realm, entity, matl, dropTable)
-            return True
+       if dropTable := realm.map.harvest(r, c, deplete):
+          self.processDrops(realm, entity, matl, dropTable)
+          return True
 
     def harvestAdjacent(self, realm, entity, matl, deplete=True):
         r, c      = entity.pos

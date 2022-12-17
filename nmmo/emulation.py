@@ -52,20 +52,20 @@ def const_horizon(dones):
     return dones
 
 def pack_atn_space(config):
-   actions = defaultdict(dict)                                             
-   for atn in sorted(nmmo.Action.edges(config)):
-      for arg in sorted(atn.edges):
-         actions[atn][arg] = arg.N(config)
+    actions = defaultdict(dict)
+    for atn in sorted(nmmo.Action.edges(config)):
+       for arg in sorted(atn.edges):
+          actions[atn][arg] = arg.N(config)
 
-   n = 0                                                                   
-   flat_actions = {}                                                  
-   for atn, args in actions.items():                                       
-       ranges = [range(e) for e in args.values()]                          
-       for vals in itertools.product(*ranges):                                       
-          flat_actions[n] = {atn: {arg: val for arg, val in zip(args, vals)}}
-          n += 1 
+    n = 0
+    flat_actions = {}
+    for atn, args in actions.items():                                   
+        ranges = [range(e) for e in args.values()]
+        for vals in itertools.product(*ranges):                               
+            flat_actions[n] = {atn: dict(zip(args, vals))}
+            n += 1 
 
-   return flat_actions
+    return flat_actions
 
 def pack_obs_space(observation):
    n = 0                                                                   
@@ -101,8 +101,7 @@ def pack_obs(obs):
         ary = []
         obs[key].items()
         for ent_name, ent_attrs in obs[key].items():
-            for attr_name, attr in ent_attrs.items():
-                ary.append(attr.ravel())
+            ary.extend(attr.ravel() for attr_name, attr in ent_attrs.items())
         packed[key] = np.concatenate(ary) 
 
     return packed 

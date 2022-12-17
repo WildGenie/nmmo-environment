@@ -11,9 +11,8 @@ class Loadout:
       return (self.chestplate.level + self.platelegs.level) // 2
 
    def packet(self):
-      packet = {}
+      packet = {'chestplate': self.chestplate.packet()}
 
-      packet['chestplate'] = self.chestplate.packet()
       packet['platelegs']  = self.platelegs.packet()
 
       return packet
@@ -23,12 +22,7 @@ class Armor:
       self.level = level
 
    def packet(self):
-     packet = {}
- 
-     packet['level'] = self.level
-     packet['color'] = self.color.packet()
-
-     return packet
+      return {'level': self.level, 'color': self.color.packet()}
 
    @property
    def color(self):

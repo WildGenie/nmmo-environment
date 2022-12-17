@@ -59,25 +59,24 @@ class GodswordServerProtocol(WebSocketServerProtocol):
         self.isConnected = True
 
     def onConnect(self, request):
-        print("WebSocket connection request: {}".format(request))
+        print(f"WebSocket connection request: {request}")
         realm = self.factory.realm
         self.realm = realm
         self.frame += 1
 
     def serverPacket(self):
-        data = self.realm.packet
-        return data
+        return self.realm.packet
 
     def sendUpdate(self, data):
-        packet               = {}
-        packet['resource']   = data['resource']
-        packet['player']     = data['player']
-        packet['npc']        = data['npc']
-        packet['pos']        = data['pos']
-        packet['wilderness'] = data['wilderness']
-        packet['market']     = data['market']
-        
-        print('Is Connected? : {}'.format(self.isConnected))
+        packet = {
+            'resource': data['resource'],
+            'player': data['player'],
+            'npc': data['npc'],
+            'pos': data['pos'],
+            'wilderness': data['wilderness'],
+            'market': data['market'],
+        }
+        print(f'Is Connected? : {self.isConnected}')
         if not self.sent_environment:
             packet['map']    = data['environment']
             packet['border'] = data['border']
@@ -151,7 +150,7 @@ class Application:
    def update(self, packet):
       return self.factory.update(packet)
 
-   def kill(*args):
-      print("Killed by user")
-      reactor.stop()
-      os._exit(0)
+   def kill(self):
+       print("Killed by user")
+       reactor.stop()
+       os._exit(0)

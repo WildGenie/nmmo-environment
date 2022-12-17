@@ -120,11 +120,7 @@ def spawn_concurrent(config):
     # Number of tiles, including within-team sep, occupied by each team
     tiles_per_team = teammate_sep*(team_size-1) + team_size
 
-    # Number of total tiles dedicated to separating teams
-    buffer_tiles = 0
-    if team_n > 1:
-        buffer_tiles = total_tiles - tiles_per_team*team_n
-
+    buffer_tiles = total_tiles - tiles_per_team*team_n if team_n > 1 else 0
     # Number of tiles between teams
     team_sep = buffer_tiles // team_n
 

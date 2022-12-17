@@ -68,20 +68,16 @@ class Quill:
 
    @property
    def packet(self):
-      packet = {'Env':    self.env.stats,
-              'Player': self.player.stats}
-
-      if self.config.LOG_EVENTS:
-          packet['Event'] = self.event.stats
-      else:
-          packet['Event'] = 'Unavailable: config.LOG_EVENTS = False'
-
-      if self.config.LOG_MILESTONES:
-          packet['Milestone'] = self.event.stats
-      else:
-          packet['Milestone'] = 'Unavailable: config.LOG_MILESTONES = False'
-
-      return packet
+       return {
+           'Env': self.env.stats,
+           'Player': self.player.stats,
+           'Event': self.event.stats
+           if self.config.LOG_EVENTS
+           else 'Unavailable: config.LOG_EVENTS = False',
+           'Milestone': self.event.stats
+           if self.config.LOG_MILESTONES
+           else 'Unavailable: config.LOG_MILESTONES = False',
+       }
 
 #Log wrapper and benchmarker
 class Benchmarker:

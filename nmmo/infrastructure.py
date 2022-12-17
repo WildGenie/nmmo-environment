@@ -22,7 +22,7 @@ class DataType:
 class Index:
    '''Lookup index of attribute names'''
    def __init__(self, prealloc):
-      self.free  = {idx for idx in range(1, prealloc)}
+      self.free = set(range(1, prealloc))
       self.index = {}
       self.back  = {}
 
@@ -54,7 +54,7 @@ class Index:
       return self.back[row]
 
    def expand(self, cur, nxt):
-      self.free.update({idx for idx in range(cur, nxt)})
+      self.free.update(set(range(cur, nxt)))
 
 class ContinuousTable:
    '''Flat tensor representation for a set of continuous attributes'''
@@ -194,9 +194,10 @@ class GridTables:
           assert len(keys) <= self.pad, err
 
       rows = [self.index.get(key) for key in keys[:self.pad]]
-      values = {'Continuous': self.continuous.get(rows, self.pad),
-                'Discrete':   self.discrete.get(rows, self.pad)}
-      return values
+      return {
+          'Continuous': self.continuous.get(rows, self.pad),
+          'Discrete': self.discrete.get(rows, self.pad),
+      }
 
    def update(self, obj, val):
       key, attr = obj.key, obj.attr

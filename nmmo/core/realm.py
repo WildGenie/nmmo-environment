@@ -129,8 +129,7 @@ class NPCManager(EntityGroup):
          if self.realm.map.tiles[r, c].occupied:
             continue
 
-         npc = NPC.spawn(self.realm, (r, c), self.idx)
-         if npc: 
+         if npc := NPC.spawn(self.realm, (r, c), self.idx):
             super().spawn(npc)
             self.idx -= 1
 
@@ -142,10 +141,7 @@ class NPCManager(EntityGroup):
            self.spawn_dangers.append(entity.spawn_danger)
 
    def actions(self, realm):
-      actions = {}
-      for idx, entity in self.entities.items():
-         actions[idx] = entity.decide(realm)
-      return actions
+      return {idx: entity.decide(realm) for idx, entity in self.entities.items()}
        
 class PlayerManager(EntityGroup):
    def __init__(self, config, realm):
@@ -263,10 +259,7 @@ class Realm:
 
    def entity(self, entID):
       '''Get entity by ID'''
-      if entID < 0:
-         return self.npcs[entID]
-      else:
-         return self.players[entID]
+      return self.npcs[entID] if entID < 0 else self.players[entID]
 
    def step(self, actions):
       '''Run game logic for one tick

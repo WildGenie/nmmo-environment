@@ -13,9 +13,7 @@ from nmmo.systems.ai.dynamic_programming import map_to_rewards, \
 def validTarget(ent, targ, rng):
    if targ is None or not targ.alive:
       return False
-   if lInfty(ent.pos, targ.pos) > rng:
-      return False
-   return True
+   return lInfty(ent.pos, targ.pos) <= rng
 
 
 def validResource(ent, tile, rng):
@@ -27,12 +25,8 @@ def directionTowards(ent, targ):
    sr, sc = ent.base.pos
    tr, tc = targ.base.pos
 
-   if abs(sc - tc) > abs(sr - tr):
-      direction = (0, np.sign(tc - sc))
-   else:
-      direction = (np.sign(tr - sr), 0)
-
-   return direction
+   return ((0, np.sign(tc - sc)) if abs(sc - tc) > abs(sr - tr) else
+           (np.sign(tr - sr), 0))
 
 
 def closestTarget(ent, tiles, rng=1):
@@ -114,9 +108,7 @@ def meander(obs):
       cands.append((0, -1))
    if vacant(obs.tile(0, 1)):
       cands.append((0, 1))
-   if not cands:
-      return (-1, 0)
-   return random.choice(cands)
+   return random.choice(cands) if cands else (-1, 0)
 
 # A* Search
 def l1(start, goal):
@@ -205,8 +197,7 @@ def adjacentDeltas():
 def l1Deltas(s):
    rets = []
    for r in range(-s, s + 1):
-      for c in range(-s, s + 1):
-         rets.append((r, c))
+      rets.extend((r, c) for c in range(-s, s + 1))
    return rets
 
 
